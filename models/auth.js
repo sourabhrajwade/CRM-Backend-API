@@ -42,7 +42,7 @@ const authSchema = new mongoose.Schema({
   },
   isVerified: {
     type: Boolean,
-    default: false
+    default: true
   },
   passwordChangedAt: Date,
   passwordResetToken: String,
