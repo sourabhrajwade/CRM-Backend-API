@@ -8,6 +8,7 @@ const app = express();
 
 const userRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
+const contactRoutes = require('./routes/contacts');
 mongoose
   .connect(
     `mongodb+srv://${process.env.DB_UN}:${process.env.DB_PW}@cluster0-hh5l0.mongodb.net/CRM?retryWrites=true&w=majority`,
@@ -40,6 +41,7 @@ app.use((req, res, next) => {
 
 
 app.use("/api/v1/user", userRoutes);
-app.use('/api/v1/admin', adminRoutes)
+app.use('/api/v1/admin', adminRoutes);
+app.use('api/v1/contacts', contactRoutes)
 
 module.exports = app;

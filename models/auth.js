@@ -70,16 +70,12 @@ authSchema.pre('save', function(next) {
   next();
 });
 
-authSchema.pre(/^find/, function(next) {
-  // this points to the current query
-  this.find({ active: { $ne: false } });
-  next();
-});
 
-authSchema.methods.correctPassword = async function(
+
+authSchema.methods.correctPassword = async (
   candidatePassword,
   userPassword
-) {
+) => {
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 

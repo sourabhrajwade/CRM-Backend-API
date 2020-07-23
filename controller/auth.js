@@ -1,5 +1,6 @@
 const crypto = require("crypto");
-// const { promisify } = require('util');
+const bcrypt = require("bcryptjs");
+const utils = require("util");
 const jwt = require("jsonwebtoken");
 const User = require("./../models/auth");
 // const catchAsync = require('./../utils/catchAsync');
@@ -9,6 +10,11 @@ const sendEmail = require("./../utils/sendMail");
 const error = (res, code, message) => {
   return res.status(code).json({
     message,
+  });
+};
+const signToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
 
@@ -33,7 +39,7 @@ const generateJWTToken = (user, res) => {
   });
 };
 
-exports.protect = catchAsync(async (req, res, next) => {
+exports.autherize = async (req, res, next) => {
   // 1) Getting token and check of it's there
   let token;
   if (
@@ -44,44 +50,43 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   if (!token) {
-    return next(
-      new AppError("You are not logged in! Please log in to get access.", 401)
-    );
+    return res.status(401).json({
+      message: "The are not logged in. Please log in again. ",
+    });
   }
 
   // 2) Verification token
-  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  const decoded = await utils.promisify(
+    jwt.verify(token, process.env.JWT_SECRET)
+  );
 
   // 3) Check if user still exists
   const currentUser = await User.findById(decoded.id);
   if (!currentUser) {
-    return next(
-      new AppError(
-        "The user belonging to this token does no longer exist.",
-        401
-      )
-    );
+    return res.staus(401).json({
+      message: "The user belonging to this token does no longer exist.",
+    });
   }
 
   // 4) Check if user changed password after the token was issued
   if (currentUser.changedPasswordAfter(decoded.iat)) {
-    return next(
-      new AppError("User recently changed password! Please log in again.", 401)
-    );
+    return res.status(401).json({
+      message: "User recently changed password! Please log in again.",
+    });
   }
 
   // GRANT ACCESS TO PROTECTED ROUTE
   req.user = currentUser;
   next();
-});
+};
 
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
-    // roles ['admin', 'lead-guide']. role='user'
+    // roles ['admin', 'manager', 'employee]. role='user'
     if (!roles.includes(req.user.role)) {
-      return next(
-        new AppError("You do not have permission to perform this action", 403)
-      );
+      return res.status(403).json({
+        message: "You do not have permission to perform this action",
+      });
     }
 
     next();
@@ -114,7 +119,7 @@ exports.signup = async (req, res, next) => {
     await sendEmail({
       email: user.email,
       subject: "Activate your account",
-      message,
+      html: message,
     });
     res.status(200).json({
       message: "Token sent to email",
@@ -162,13 +167,70 @@ exports.login = async (req, res, next) => {
       message: "Provide login credentials",
     });
   }
-  const user = User.findOne({ email }).select("password");
-
-  if (!user || !(await user.correctPassword(password, user.password))) {
+  const user = await User.findOne({ email }).select("+password");
+  const match = await bcrypt.compare(password, user.password);
+  if (!user || !match) {
     return res.status(400).json({
       message: "Invalid login credentials",
     });
   }
+
+  generateJWTToken(user, res);
+};
+
+exports.forgetPassword = async (req, res, next) => {
+  const email = req.body.email;
+  const user = User.findOne({ email });
+  if (!user) {
+    return error(res, 404, "User not found.");
+  }
+  const resetToken = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+
+  const resetURL = `${req.protocol}://${req.get(
+    "host"
+  )}/api/v1/user/resetpassword/${resetToken}`;
+  const message = `Forget your password. Follow the link ${resetURL}.\n If you didn't, ignore the link.`;
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Your password reset link is valid for 10 minutes.",
+      message,
+    });
+    res.status(200).json({
+      message: "Token sent via email. ",
+    });
+  } catch (err) {
+    user.passwordResetToken = null;
+    user.passwordResetExpires = null;
+    await (await user).save({ validateBeforeSave: false });
+    return next(
+      res.status(500).json({
+        message: "There was an error sending the mail. Please try again.",
+      })
+    );
+  }
+};
+
+exports.resetPassword = async (req, res, next) => {
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+      return next(error(res, 400, 'Link is invalid or expired'));
+  }
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  user.passwordResetToken = null;
+  user.passwordResetExpires = null;
+  await user.save();
 
   generateJWTToken(user, res);
 };

@@ -11,9 +11,9 @@ exports.fetchAllUnverifiedUsers = async (req, res, next) => {
 };
 
 exports.addUser = async (req, res, next) => {
-    const id = req.body.id
+    const userId = req.body.id
     const assignRole = req.body.role
-    const user = await User.findOne({_id:id});
+    const user = await User.findOne({_id:userId});
     if (!user) {
         return res.status(400).json({
             message: "User donoes not exist",
@@ -29,8 +29,8 @@ exports.addUser = async (req, res, next) => {
 }
 
 exports.deleteUser = async (req, res, next) => {
-    const id = req.body.id;
-    const user = await User.findOne({_id:id});
+    const userId = req.body.id;
+    const user = await User.findOne({_id:userId});
     if (!user) {
         return res.status(400).json({
             message: "User does not exist",
@@ -41,10 +41,10 @@ exports.deleteUser = async (req, res, next) => {
 }
 
 exports.changeRole = async (req, res, next) => {
-    const id = req.body.id
+    const userId = req.body.id
     const assignRole = req.body.role
     const id = req.body.id;
-    const user = await User.findOne({_id:id});
+    const user = await User.findOne({_id:userId});
     if (!user) {
         return res.status(400).json({
             message: "User does not exist",

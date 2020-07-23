@@ -2,10 +2,11 @@ const express = require("express");
 
 const adminController = require('../controller/admin');
 
-// const multer = require("multer");
-
 const router = express.Router();
 
-router.get('/user', adminController.fetchAllUnverifiedUsers);
+router.get('/getall', adminController.fetchAllUnverifiedUsers);
+router.patch('/adduser', adminController.addUser);
+router.delete('/deleteuser', adminController.deleteUser);
+router.patch('/changerole', adminController.changeRole);
 
 module.exports = router;
