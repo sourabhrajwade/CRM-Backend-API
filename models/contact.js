@@ -1,7 +1,7 @@
-const crypto = require("crypto");
+
 const mongoose = require("mongoose");
 const validator = require("validator");
-const bcrypt = require("bcryptjs");
+
 
 const contactSchema = new mongoose.Schema({
   name: {
@@ -27,6 +27,6 @@ const contactSchema = new mongoose.Schema({
 });
 
 
-const Contact = mongoose.model('Contact', contactSchema, 'contacts');
+const Contacts = mongoose.model('Contacts', contactSchema, 'contacts');
 
-module.exports = Contact;
+module.exports = Contacts;

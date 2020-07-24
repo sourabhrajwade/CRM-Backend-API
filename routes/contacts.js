@@ -4,8 +4,11 @@ const contactController = require('../controller/contact');
 
 const router = express.Router();
 
-router.post('', contactController.createContact);
+router.post('/create', contactController.createContact);
 
+router.post('/getbyemail', contactController.getContactbyEmail);    
+
+router.get('/all', contactController.getAllContacts);    
 
 
 
