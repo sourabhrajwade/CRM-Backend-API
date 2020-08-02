@@ -1,12 +1,15 @@
 const express = require("express");
-
+const User = require('../models/auth');
 const adminController = require('../controller/admin');
+const autherization = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/getall', adminController.fetchAllUnverifiedUsers);
-router.patch('/adduser', adminController.addUser);
-router.delete('/deleteuser', adminController.deleteUser);
-router.patch('/changerole', adminController.changeRole);
+
+
+router.get('/getall',autherization.protect,autherization.authorize('admin'), adminController.fetchAllUnverifiedUsers);
+router.patch('/adduser',autherization.protect,autherization.authorize('admin'), adminController.addUser);
+router.delete('/deleteuser', autherization.protect,autherization.authorize('admin'), adminController.deleteUser);
+router.patch('/changerole',autherization.protect,autherization.authorize('admin'),  adminController.changeRole);
 
 module.exports = router;

@@ -2,9 +2,7 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 
 const leadSchema = new mongoose.Schema({
-    requester_id: {
-        type: Number
-    },
+
     email: {
         type: String, 
         validate: [validator.isEmail, "Please provide email"]
@@ -40,7 +38,7 @@ const leadSchema = new mongoose.Schema({
         type: Date, 
         default: Date.now()
     },
-    companyName : String,
+    companyName :{ type: String,default: 'self'},
     description: String, 
 });
 

@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const jwt = require("jsonwebtoken");
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
@@ -21,7 +22,7 @@ const authSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['guest', 'employee', 'manager', 'admin'],
+    enum: ['guest', 'employee','employee-2', 'manager', 'admin'],
     default: 'guest'
   },
   password: {
@@ -70,13 +71,18 @@ authSchema.pre('save', function(next) {
   next();
 });
 
-
-
 authSchema.methods.correctPassword = async (
   candidatePassword,
   userPassword
 ) => {
   return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+// Sign JWT and return
+authSchema.methods.getSignedJwtToken = function() {
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN
+  });
 };
 
 authSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
@@ -88,7 +94,6 @@ authSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
 
     return JWTTimestamp < changedTimestamp;
   }
-
   // False means NOT changed
   return false;
 };

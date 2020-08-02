@@ -1,15 +1,18 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-
+const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 
 const app = express();
 
 const userRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
-const contactRoutes = require('./routes/contacts');
-const leadRoutes = require('./routes/leads');
+const contactRoutes = require("./routes/contacts");
+const leadRoutes = require("./routes/leads");
+const serviceRoutes = require("./routes/service");
+
+mongoose.set("useCreateIndex", true);
 mongoose
   .connect(
     `mongodb+srv://${process.env.DB_UN}:${process.env.DB_PW}@cluster0-hh5l0.mongodb.net/CRM?retryWrites=true&w=majority`,
@@ -26,6 +29,7 @@ mongoose
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -40,10 +44,10 @@ app.use((req, res, next) => {
   next();
 });
 
-
 app.use("/api/v1/user", userRoutes);
-app.use('/api/v1/admin', adminRoutes);
-app.use('/api/v1/contacts', contactRoutes);
-app.use('/api/v1/leads', leadRoutes);
+app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/contacts", contactRoutes);
+app.use("/api/v1/leads", leadRoutes);
+app.use("/api/v1/services", serviceRoutes);
 
 module.exports = app;
