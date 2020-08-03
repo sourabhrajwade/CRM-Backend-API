@@ -3,7 +3,11 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
-
+const helmet = require("helmet");
+const xss = require('xss-clean');
+const hpp = require('hpp');
+const rateLimit = require("express-rate-limit");
+const mongoSanitize = require('express-mongo-sanitize');
 const app = express();
 
 const userRoutes = require("./routes/auth");
@@ -16,7 +20,7 @@ mongoose.set("useCreateIndex", true);
 mongoose
   .connect(
     `mongodb+srv://${process.env.DB_UN}:${process.env.DB_PW}@cluster0-hh5l0.mongodb.net/CRM?retryWrites=true&w=majority`,
-    { useNewUrlParser: true, useUnifiedTopology: true }
+    { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: true }
   )
   .then(() => {
     console.log("Connected to database!");
@@ -25,11 +29,23 @@ mongoose
     console.log(err);
     console.log("Connection failed!");
   });
-
+  
+app.use(helmet());
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(mongoSanitize());
+app.use(xss())
+
+const limiter = rateLimit({
+  windowMs: 10*60*1000,// 10 mins
+  max: 1000
+});
+
+app.use(limiter);
+
+app.use(hpp());
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");

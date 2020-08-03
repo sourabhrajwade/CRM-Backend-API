@@ -47,6 +47,7 @@ exports.signup = async (req, res, next) => {
     email: req.body.email,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
+    role: 'guest'
   });
   
   sendTokenResponse(user, 200, res);
@@ -97,7 +98,7 @@ exports.forgotPassword = async (req, res, next) => {
   const resetURL = `${req.protocol}://${req.get(
     "host"
   )}/api/v1/user/resetpassword/${resetToken}`;
-  // console.log(resetURL);
+  
   const message = `Forget your password. Follow the link ${resetURL}.\n If you didn't, ignore the link.`;
   try {
     await sendEmail({
@@ -108,7 +109,7 @@ exports.forgotPassword = async (req, res, next) => {
     res.status(200).json({
       message: "Token sent via email. ",
     });
-    console.log(sendEmail);
+    
   } catch (err) {
     user.passwordResetToken = null;
     user.passwordResetExpires = null;
@@ -126,7 +127,7 @@ exports.forgotPassword = async (req, res, next) => {
 exports.resetPassword = async (req, res, next) => {
   const hashedToken = crypto
     .createHash("sha256")
-    .update(req.params.token)
+    .update(req.params.resettoken)
     .digest("hex");
 
   const user = await User.findOne({
@@ -135,7 +136,10 @@ exports.resetPassword = async (req, res, next) => {
   });
 
   if (!user) {
-      return next(error(res, 400, 'Link is invalid or expired'));
+    res.status(400).json({
+      message: 'Link is invalid or expired',
+
+    });
   }
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
@@ -144,4 +148,55 @@ exports.resetPassword = async (req, res, next) => {
   await user.save();
 
   sendTokenResponse(user, 200, res);
+};
+
+exports.updateDetail = async (req, res, next) => {
+  try {
+    const fieldToUpdate = {
+      firstname: req.body.firstname, 
+      lastname: req.body.lastname,
+      email: req.body.email,
+      phone: req.body.phone
+    }
+    const user = await User.findByIdAndUpdate(req.user.id, fieldToUpdate, {
+      new: true,
+      runValidators: true
+    });
+    res.status(200).json({
+      message: "DEtails updated",
+      user
+    })
+  }catch(err) {
+    console.log(err);
+    res.status(500).json({
+      message: "There was error in updating details ",
+  
+    });
+  }
+};
+
+exports.updatePassword = async(req, res, next) => {
+  
+  const user = await User.findById(req.user.id).select('+password');
+
+  if (!(await user.matchPassword(req.body.currentPassword))) {
+    res.status(401).json({
+      message: "password incorrect"
+    });
+  }
+  user.password = req.body.newPassword;
+  user.passwordConfirm = req.body.newPassword;
+  await user.save();
+
+  sendTokenResponse(user, 200, res);
+};
+
+exports.logout = async (req, res, next ) => {
+  res.cookie('token', 'none', {
+    expires: new Date(Date.now() + 10*1000),
+    httpOnly: true
+  });
+  res.status(200).json({
+    message: "Logout"
+  });
 };

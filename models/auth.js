@@ -98,6 +98,12 @@ authSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
   return false;
 };
 
+// Match user entered password to hashed password in database
+authSchema.methods.matchPassword = async function(enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+
 authSchema.methods.createPasswordResetToken = function() {
   const resetToken = crypto.randomBytes(32).toString('hex');
 
@@ -108,7 +114,7 @@ authSchema.methods.createPasswordResetToken = function() {
 
   console.log({ resetToken }, this.passwordResetToken);
 
-  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+  this.passwordResetExpires = Date.now() + 10 * 60 *60* 1000;
 
   return resetToken;
 };
