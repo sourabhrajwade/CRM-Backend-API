@@ -23,6 +23,6 @@ const serviceSchema = mongoose.Schema({
   updated_on: { type: Date },
 });
 
-const Services = mongoose.model("Services", serviceSchema, "service");
+const Service = mongoose.model("Service", serviceSchema, "service");
 
-module.exports = Services;
+module.exports = Service;

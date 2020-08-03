@@ -37,18 +37,7 @@ const sendTokenResponse = (user, statusCode, res) => {
     });
 };
 
-exports.restrictTo = (...roles) => {
-  return (req, res, next) => {
-    // roles ['admin', 'manager', 'employee]. role='user'
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        message: "You do not have permission to perform this action",
-      });
-    }
 
-    next();
-  };
-};
 
 exports.signup = async (req, res, next) => {
 
@@ -65,28 +54,6 @@ exports.signup = async (req, res, next) => {
 
 };
 
-exports.verifyuser = async (req, res, next) => {
-  const recievedToken = crypto
-    .createHash("sha256")
-    .update(req.params.token)
-    .digest("hex");
-  const user = await User.findOne({
-    passwordResetToken: recievedToken,
-    passwordResetExpires: { $gt: Date.now() },
-  });
-  // token expires
-  if (!user) {
-    return error(res, 400, "Token expired");
-  }
-  user.passwordResetToken = null;
-  user.passwordResetExpires = null;
-  user.isVerified = true;
-  await user.save().then(
-    res.status(200).json({
-      message: "Request send to Admin for approval",
-    })
-  );
-};
 
 exports.login = async (req, res, next) => {
   try{
@@ -118,39 +85,43 @@ catch(err) {
 }
 };
 
-exports.forgetPassword = async (req, res, next) => {
+exports.forgotPassword = async (req, res, next) => {
   const email = req.body.email;
-  const user = User.findOne({ email });
+  const user = await User.findOne({ email });
   if (!user) {
     return error(res, 404, "User not found.");
   }
-  const resetToken = user.createPasswordResetToken();
+  const resetToken = await user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
 
   const resetURL = `${req.protocol}://${req.get(
     "host"
   )}/api/v1/user/resetpassword/${resetToken}`;
+  // console.log(resetURL);
   const message = `Forget your password. Follow the link ${resetURL}.\n If you didn't, ignore the link.`;
   try {
     await sendEmail({
       email: user.email,
       subject: "Your password reset link is valid for 10 minutes.",
-      message,
+      message
     });
     res.status(200).json({
       message: "Token sent via email. ",
     });
+    console.log(sendEmail);
   } catch (err) {
     user.passwordResetToken = null;
     user.passwordResetExpires = null;
-    await (await user).save({ validateBeforeSave: false });
-    return next(
+    (await user).save({ validateBeforeSave: false });
+    
       res.status(500).json({
         message: "There was an error sending the mail. Please try again.",
-      })
-    );
+    
+      });
   }
 };
+
+
 
 exports.resetPassword = async (req, res, next) => {
   const hashedToken = crypto
