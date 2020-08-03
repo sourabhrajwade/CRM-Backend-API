@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const jwt = require("jsonwebtoken");
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
@@ -21,7 +22,7 @@ const authSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['guest', 'employee', 'manager', 'admin'],
+    enum: ['guest', 'employee','employee-2', 'manager', 'admin'],
     default: 'guest'
   },
   password: {
@@ -42,7 +43,7 @@ const authSchema = new mongoose.Schema({
   },
   isVerified: {
     type: Boolean,
-    default: false
+    default: true
   },
   passwordChangedAt: Date,
   passwordResetToken: String,
@@ -70,17 +71,18 @@ authSchema.pre('save', function(next) {
   next();
 });
 
-authSchema.pre(/^find/, function(next) {
-  // this points to the current query
-  this.find({ active: { $ne: false } });
-  next();
-});
-
-authSchema.methods.correctPassword = async function(
+authSchema.methods.correctPassword = async (
   candidatePassword,
   userPassword
-) {
+) => {
   return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+// Sign JWT and return
+authSchema.methods.getSignedJwtToken = function() {
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN
+  });
 };
 
 authSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
@@ -92,10 +94,15 @@ authSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
 
     return JWTTimestamp < changedTimestamp;
   }
-
   // False means NOT changed
   return false;
 };
+
+// Match user entered password to hashed password in database
+authSchema.methods.matchPassword = async function(enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
 
 authSchema.methods.createPasswordResetToken = function() {
   const resetToken = crypto.randomBytes(32).toString('hex');
@@ -107,7 +114,7 @@ authSchema.methods.createPasswordResetToken = function() {
 
   console.log({ resetToken }, this.passwordResetToken);
 
-  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+  this.passwordResetExpires = Date.now() + 10 * 60 *60* 1000;
 
   return resetToken;
 };

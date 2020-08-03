@@ -1,19 +1,15 @@
 const express = require("express");
-
+const User = require('../models/auth');
 const adminController = require('../controller/admin');
-
-// const multer = require("multer");
+const autherization = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/user', adminController.getUser);
-// router.post('/login', authController.login);
-// router.post('/forgotPassword', authController.forgotPassword);
-// router.patch('/resetPassword/:token', authController.resetPassword);
-// router.patch('/verifypassword/:token', authController.verifyuser);
 
-// Protect all routes after this middleware
-// router.use(authController.protect);
 
-// router.patch('/updateMyPassword', authController.updatePassword);
+router.get('/getall',autherization.protect,autherization.authorize('admin'), adminController.fetchAllUnverifiedUsers);
+router.patch('/adduser',autherization.protect,autherization.authorize('admin'), adminController.addUser);
+router.delete('/deleteuser', autherization.protect,autherization.authorize('admin'), adminController.deleteUser);
+router.patch('/changerole',autherization.protect,autherization.authorize('admin'),  adminController.changeRole);
+
 module.exports = router;
