@@ -20,7 +20,7 @@ mongoose.set("useCreateIndex", true);
 mongoose
   .connect(
     `mongodb+srv://${process.env.DB_UN}:${process.env.DB_PW}@cluster0-hh5l0.mongodb.net/CRM?retryWrites=true&w=majority`,
-    { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: true }
+    { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false }
   )
   .then(() => {
     console.log("Connected to database!");

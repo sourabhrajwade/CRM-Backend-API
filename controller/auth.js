@@ -1,7 +1,5 @@
 const crypto = require("crypto");
-const bcrypt = require("bcryptjs");
-const utils = require("util");
-const jwt = require("jsonwebtoken");
+
 const User = require("./../models/auth");
 
 
@@ -47,7 +45,8 @@ exports.signup = async (req, res, next) => {
     email: req.body.email,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
-    role: 'guest'
+    role: 'guest',
+    isVerified: false
   });
   
   sendTokenResponse(user, 200, res);
