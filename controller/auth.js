@@ -17,7 +17,7 @@ const sendTokenResponse = (user, statusCode, res) => {
 
   const options = {
     expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
     httpOnly: true
   };
@@ -31,26 +31,32 @@ const sendTokenResponse = (user, statusCode, res) => {
     .cookie('token', token, options)
     .json({
       success: true,
-      token
+      token,
+      options,
+      user
     });
 };
 
 
 
 exports.signup = async (req, res, next) => {
-
-  const user = await User.create({
-    firstname: req.body.firstname,
-    lastname: req.body.lastname,
-    email: req.body.email,
-    password: req.body.password,
-    passwordConfirm: req.body.passwordConfirm,
-    role: 'guest',
-    isVerified: false
-  });
-  
-  sendTokenResponse(user, 200, res);
-  // Verify email
+  try {
+    const user = await new User({
+      firstname: req.body.firstname,
+      lastname: req.body.lastname,
+      email: req.body.email,
+      password: req.body.password,
+      passwordConfirm: req.body.passwordConfirm,
+      role: 'guest',
+      isVerified: false
+    });
+    user.save()
+    .then(sendTokenResponse(user, 200, res))
+    
+    // Verify email
+  }catch(err) {
+    console.log(err);
+  }
 
 };
 

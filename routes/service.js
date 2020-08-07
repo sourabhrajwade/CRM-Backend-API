@@ -11,4 +11,6 @@ router.get('/select/:id', autherization.protect, autherization.authorize('admin'
 
 router.patch('/update/:id', autherization.protect, autherization.authorize('admin', 'employee','employee-2', 'manager'), serviceController.updateStatus);
 
+router.get('/all', autherization.protect, autherization.authorize('admin', 'employee','employee-2', 'manager'), serviceController.all);
+
 module.exports = router;
