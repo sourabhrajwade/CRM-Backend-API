@@ -1,14 +1,23 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
-
+const { v4: uuidv4 } = require('uuid');
 const leadSchema = new mongoose.Schema({
-
+    fullname: String,
     email: {
         type: String, 
         validate: [validator.isEmail, "Please provide email"]
     },
-    phone: {
+    mobile: {
         type: Number,
+    },
+    city: String,
+    gender: {
+        type: String,
+        enum: ['male', 'female', 'others'],
+        default: 'male'
+    },
+    department: {
+        type: String
     },
     delete: {
         type: Boolean,
@@ -38,8 +47,10 @@ const leadSchema = new mongoose.Schema({
         type: Date, 
         default: Date.now()
     },
-    companyName :{ type: String,default: 'self'},
+    
+    companyname :{ type: String,default: 'self'},
     description: String, 
+    assignedTo: { type: String,default: 'None'},
 });
 
 

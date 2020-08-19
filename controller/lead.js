@@ -4,12 +4,21 @@ const Contacts = require("../models/contact");
 // Search in contact to get lead,remove duplicated leads
 exports.createLead = async (req, res, next) => {
   try {
-    const { email, phone, description, companyName } = req.body;
+    const { fullname, email, department,updatedDate, mobile, description, companyname, city, gender, status, priority, source,assignedTo } = req.body;
     const newLead = await Leads.create({
+      fullname,
+      city,
       email,
-      phone,
+      mobile,
       description,
-      companyName,
+      companyname,
+      updatedDate,
+      gender,
+      department,
+      status,
+      priority,
+      source,
+      assignedTo
     });
     const lead = await Leads.findOne({ email: newLead.email });
     if (!lead) {
@@ -53,20 +62,22 @@ exports.fetchAll = async (req, res, next) => {
 
 exports.updateLead = async (req, res, next) => {
   try {
-    const leadId = req.params.id;
-    console.log(leadId);
-    const lead = await Leads.findOne({ _id: leadId });
+    const email = req.body.email;
+    
+    const lead = await Leads.findOne({ email });
     if (!lead) {
       res.status(400).json({
         message: "Lead doesn't exist.",
       });
     }
+    const priority = req.body.priority;
+    const source = req.body.source; 
     const description = req.body.description;
     const updatedDate = Date.now();
     const status = req.body.status;
     const updatedLead = await Leads.updateMany(
-      { _id: leadId },
-      { $set: { description, updatedDate, status } }
+      { email },
+      { $set: { description, updatedDate, status, source,  priority} }
     );
     console.log(updatedLead);
     if (updatedLead.nModified != 0) {
@@ -84,7 +95,7 @@ exports.updateLead = async (req, res, next) => {
 };
 // Soft delete lead
 exports.deleteLead = async (req, res, next) => {
-  const leadId = req.params.id;
+  const leadId = req.body.id;
   const lead = await Leads.findOne({ _id: leadId });
   if (!lead) {
     res.status(400).json({
