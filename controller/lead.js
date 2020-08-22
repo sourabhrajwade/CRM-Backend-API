@@ -4,7 +4,21 @@ const Contacts = require("../models/contact");
 // Search in contact to get lead,remove duplicated leads
 exports.createLead = async (req, res, next) => {
   try {
-    const { fullname, email, department,updatedDate, mobile, description, companyname, city, gender, status, priority, source,assignedTo } = req.body;
+    const {
+      fullname,
+      email,
+      department,
+      mobile,
+      description,
+      companyname,
+      city,
+      gender,
+      status,
+      priority,
+      doneby,
+      source,
+      assignedTo,
+    } = req.body;
     const newLead = await Leads.create({
       fullname,
       city,
@@ -12,25 +26,24 @@ exports.createLead = async (req, res, next) => {
       mobile,
       description,
       companyname,
-      updatedDate,
       gender,
       department,
       status,
       priority,
       source,
-      assignedTo
+      assignedTo,
+      doneby,
     });
     const lead = await Leads.findOne({ email: newLead.email });
     if (!lead) {
       res.status(500).json({
         message: "Lead does not exist",
       });
-    }
-    else {
+    } else {
       res.status(200).json({
-        message: "Lead successfully created."
-      })
-  }
+        message: "Lead successfully created.",
+      });
+    }
   } catch (err) {
     console.log(err);
     res.status(400).json({
@@ -53,7 +66,7 @@ exports.viewLead = async (req, res, next) => {
 };
 
 exports.fetchAll = async (req, res, next) => {
-  const leads = await Leads.find({delete: false});
+  const leads = await Leads.find({ delete: false });
   res.status(200).json({
     message: "List of leads",
     leads,
@@ -63,21 +76,22 @@ exports.fetchAll = async (req, res, next) => {
 exports.updateLead = async (req, res, next) => {
   try {
     const email = req.body.email;
-    
+
     const lead = await Leads.findOne({ email });
     if (!lead) {
       res.status(400).json({
         message: "Lead doesn't exist.",
       });
     }
+    const doneby = req.body.doneby;
     const priority = req.body.priority;
-    const source = req.body.source; 
+    const source = req.body.source;
     const description = req.body.description;
-    const updatedDate = Date.now();
+
     const status = req.body.status;
     const updatedLead = await Leads.updateMany(
       { email },
-      { $set: { description, updatedDate, status, source,  priority} }
+      { $set: { description, status, source, priority, doneby } }
     );
     console.log(updatedLead);
     if (updatedLead.nModified != 0) {
@@ -95,29 +109,40 @@ exports.updateLead = async (req, res, next) => {
 };
 // Soft delete lead
 exports.deleteLead = async (req, res, next) => {
-  const leadId = req.body.id;
-  const lead = await Leads.findOne({ _id: leadId });
-  if (!lead) {
-    res.status(400).json({
-      message: "Lead doesn't exist.",
-    });
-  }
-  const deleteLead = await Leads.updateOne(
-    { _id: leadId },
-    { $set: { delete: true } }
-  );
-  if (deleteLead.nModified > 0) {
-    res.status(200).json({
-      message: "Leads were deleted and sent for complete deletion",
-      deleteLead,
-    });
+  try {
+    const email = req.body.email;
+    console.log(email);
+    const lead = await Leads.findOneAndUpdate(
+      { email },
+      { delete: true },
+      {
+        new: true,
+        upsert: true, // Make this update into an upsert
+      }
+    );
+    if (!lead) {
+      res.status(400).json({
+        message: "Lead doesn't exist.",
+      });
+    } else {
+      console.log(lead);
+      res.status(200).json({
+        message: "Leads were deleted and sent for complete deletion",
+      });
+    }
+    // const deleteLead = await Leads.updateOne(
+    //   { email },
+    //   { $set: { delete: true } }
+    // );
+  } catch (err) {
+    console.log(err);
   }
 };
 
 // Permanent delete - Manager and Admin rights required
 exports.remove = async (req, res, next) => {
   const leadId = req.params.id;
-  const lead = await Leads.findOne({ _id: leadId, delete: true});
+  const lead = await Leads.findOne({ _id: leadId, delete: true });
   console.log(lead);
   if (!lead) {
     res.status(400).json({
@@ -133,22 +158,22 @@ exports.remove = async (req, res, next) => {
   }
 };
 // View Shallow deleted Leads
-exports.viewDelete = async (req,res,next) => {
-    try {
-        const deletedLeads = await Leads.find({delete: true});
-        if (!deletedLeads) {
-            res.status(400).json({
-                message: "Error"
-            })
-        } else {
-            res.status(200).json({
-                message: "List deleted",
-                deletedLeads
-            })
-        }
-    } catch (error) {
-        console.log(error);
+exports.viewDelete = async (req, res, next) => {
+  try {
+    const deletedLeads = await Leads.find({ delete: true });
+    if (!deletedLeads) {
+      res.status(400).json({
+        message: "Error",
+      });
+    } else {
+      res.status(200).json({
+        message: "List deleted",
+        deletedLeads,
+      });
     }
+  } catch (error) {
+    console.log(error);
+  }
 };
 // Restore Lead - Admin/Manager
 exports.restore = async (req, res, next) => {
@@ -172,7 +197,7 @@ exports.restore = async (req, res, next) => {
     }
   } catch (err) {
     res.status(400).json({
-      message: "Error occured!", 
+      message: "Error occured!",
       err,
     });
   }

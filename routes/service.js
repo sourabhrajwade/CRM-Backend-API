@@ -9,7 +9,7 @@ router.post('/create', autherization.protect, autherization.authorize('admin', '
 
 router.get('/select/:id', autherization.protect, autherization.authorize('admin', 'employee','employee-2', 'manager'), serviceController.selectService);
 
-router.patch('/update/:id', autherization.protect, autherization.authorize('admin', 'employee','employee-2', 'manager'), serviceController.updateStatus);
+router.patch('/update', autherization.protect, autherization.authorize('admin', 'employee','employee-2', 'manager'), serviceController.updateStatus);
 
 router.get('/all', autherization.protect, autherization.authorize('admin', 'employee','employee-2', 'manager'), serviceController.all);
 

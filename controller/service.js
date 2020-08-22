@@ -51,7 +51,7 @@ exports.selectService = async (req, res, next) => {
 // Patch request
 exports.updateStatus = async (req, res, next) => {
   try {
-    const serviceId = req.params.id;
+    const serviceId = req.body._id;
     const service = await Service.findOne({ _id: serviceId });
     if (!service) {
       res.status(400).json({

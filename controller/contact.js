@@ -8,7 +8,7 @@ const responseFun = (res, code, message) => {
 
 exports.createContact = async (req, res, next) => {
   try {
-    const {email, name, phone, description} = req.body;
+    const { email, name, phone, description } = req.body;
     const newContact = await Contacts.create({
       name,
       email,
@@ -23,9 +23,8 @@ exports.createContact = async (req, res, next) => {
       });
     } else {
       res.status(200).json({
-        message: "Contact Created"
-      })
-     
+        message: "Contact Created",
+      });
     }
   } catch (err) {
     console.log(err);
@@ -60,54 +59,58 @@ exports.getAllContacts = async (req, res, next) => {
 // Update contact
 exports.updateContact = async (req, res, next) => {
   try {
-    const id = req.params.id;
-  const {name, email, phone, description}  = req.body
-  const updated_at = Date.now();
- 
-  const updateContact = await Contacts.updateOne({_id: id}, {name, email, phone, description, updated_at});
-  if (updateContact.nModified != 0 ) {
-    res.status(200).json({
-      message: "Contact updated",
-      updateContact
-    })
-  } else {
-    res.status(500).json({
-      message: "Error in updation of contact"
-    })
-  }
-  } catch(err) {
+    const contactId = req.body._id;
+    const email = req.body.email;
+    const phone = req.body.phone;
+    const description = req.body.description;
+    const updateContact = await Contacts.findOneAndUpdate(
+      { _id: contactId },
+       { email, phone, description }, {
+        new: true,
+        upsert: true,
+       }
+    );
+    if (updateContact.nModified = 0) {
+      res.status(500).json({
+        message: "Error in updation of contact",
+      });
+      
+    } else {
+      res.status(200).json({
+        message: "Contact updated",
+        updateContact,
+      });
+    }
+  } catch (err) {
     console.log(err);
     res.status(400).json({
       message: "Error occured",
-      err
-    })
+      err,
+    });
   }
-  
-}
+};
 // Filter contact
 
 // Delete Contact
 exports.delete = async (req, res, next) => {
   try {
     const contactId = req.params.id;
-    const contact = await Contacts.deleteOne({_id:contactId});
+    const contact = await Contacts.deleteOne({ _id: contactId });
     console.log((await contact).deletedCount);
     if (contact.deletedCount > 0) {
       res.status(200).json({
         message: "Contact deleted",
-
       });
     } else {
       res.status(500).json({
-        message: "Error in contact deletion "
+        message: "Error in contact deletion ",
       });
     }
-
-  } catch(err) {
+  } catch (err) {
     console.log(err);
     res.status(400).json({
       message: "Error in deletion",
-      err
-    })
+      err,
+    });
   }
-}
+};

@@ -42,7 +42,7 @@ exports.addUser = async (req, res, next) => {
 };
 
 exports.deleteUser = async (req, res, next) => {
-  const userId = req.params.id;
+  const userId = req.body._id;
   const user = await User.findOneAndDelete({ _id: userId });
   res.status(200).json({
     message: "user deleted successfully",
@@ -50,7 +50,7 @@ exports.deleteUser = async (req, res, next) => {
 };
 
 exports.changeRole = async (req, res, next) => {
-  const userId = req.params.id;
+  const userId = req.body.id;
   const assignRole = { role: req.body.role };
 
   const user = await User.findByIdAndUpdate(userId, assignRole, {

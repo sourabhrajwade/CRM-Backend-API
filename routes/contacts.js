@@ -12,7 +12,7 @@ router.post('/getbyemail',autherization.protect, autherization.authorize('admin'
 
 router.get('/all', autherization.protect, autherization.authorize('admin', 'employee','employee-2','manager', 'guest'), contactController.getAllContacts);    
 
-router.patch('/update/:id', autherization.protect, autherization.authorize('admin','manager'), contactController.updateContact);
+router.patch('/update', autherization.protect, autherization.authorize('admin','manager'), contactController.updateContact);
 
 router.delete('/delete/:id', autherization.protect, autherization.authorize('admin','manager'), contactController.delete);
 

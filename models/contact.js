@@ -22,10 +22,10 @@ const contactSchema = new mongoose.Schema({
     default: 0
   },
   description: String,
-  created_at: { type: Date, default: Date.now() },
+
   updated_at: { type: Date, default: Date.now() },
   
-});
+},{ timestamps: { createdAt: 'created_at' }});
 
 const Contacts = mongoose.model("Contacts", contactSchema, "contacts");
 

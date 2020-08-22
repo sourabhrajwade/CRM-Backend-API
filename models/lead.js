@@ -39,19 +39,14 @@ const leadSchema = new mongoose.Schema({
         enum: ['email', 'phone'],
         default: 'email'
     },
-    createdDate: {
-        type: Date, 
-        default: Date.now()
+   
+    doneby: {
+        type: Date
     },
-    updatedDate: {
-        type: Date, 
-        default: Date.now()
-    },
-    
     companyname :{ type: String,default: 'self'},
     description: String, 
     assignedTo: { type: String,default: 'None'},
-});
+} ,{ timestamps: { createdAt: 'created_at' }});
 
 
 const Lead = mongoose.model('Lead', leadSchema, 'leads');
